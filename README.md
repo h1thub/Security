@@ -1,29 +1,176 @@
-# 安全知识白皮书
 # **1. 基础应用安全**
 
 ## **1.1 Web安全**
 
 ### **1.1.1 SQL注入**
 
+防御代码：参数化查询
+
+```bash
+def get_user_info(safe_username):
+	conn = sqlite3.connect("test.db")
+	cursor = conn.cursor()
+	query = "SELECT * FROM users WHERE username = ?"
+	cursor.execute(query, (safe_username,))
+	result = cursor.fetchall()
+	conn.close()
+	return result
+```
+
 ### **1.1.2 跨站脚本（XSS）**
+
+防御代码：Flask 中常用的模板引擎 Jinja2 默认会对模板中的变量输出进行 HTML 自动转义
+
+```bash
+<p>{{ user_input }}</p>
+```
 
 ### **1.1.3 跨站请求伪造（CSRF）**
 
+防御代码：为每个用户会话或表单生成一个随机CSRF TOKEN用于验证，有很多框架已内置这种防护手段，例如 Flask 的 Flask-WTF
+
+```bash
+from flask import Flask, render_template, request, redirect, url_for
+from flask_wtf import FlaskForm, CSRFProtect
+from wtforms import StringField, SubmitField
+
+app = Flask(__name__)
+app.secret_key = '你的密钥'
+csrf = CSRFProtect(app)
+
+class MyForm(FlaskForm):
+    username = StringField('用户名')
+    submit = SubmitField('提交')
+
+@app.route('/submit', methods=['GET', 'POST'])
+def submit():
+    form = MyForm()
+    if form.validate_on_submit():
+        # 处理业务逻辑
+        return redirect(url_for('success'))
+    return render_template('form.html', form=form)
+
+@app.route('/success')
+def success():
+    return "提交成功！"
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
 ### **1.1.4 服务端请求伪造（SSRF）**
 
-### **1.1.5 文件包含漏洞（LFI/RFI）**
+防御代码：
 
-### **1.1.6 安全HTTP头与防护机制**
+1、多次解析比较结果是否相同
 
-**点击劫持（Clickjacking）与X-Frame-Options**
+2、白名单访问域名
 
-**严格传输安全（HSTS）**
+3、黑名单访问IP（云服务内网地址）
+
+```bash
+import requests
+import socket
+import time
+import ipaddress
+import dns.resolver  # 需要安装 dnspython： pip install dnspython
+from urllib.parse import urlparse
+
+def get_ips(domain):
+    """利用 dnspython 获取域名对应的所有 A 记录 IP"""
+    try:
+        answers = dns.resolver.resolve(domain, 'A')
+        return sorted([str(rdata) for rdata in answers])
+    except Exception as e:
+        raise ValueError(f"解析域名 {domain} 时出错: {e}")
+
+def is_private_ip(ip):
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local
+    except Exception:
+        return True  # 无法解析的 IP，视为不安全
+
+def safe_fetch_url(url, allowed_domains=["example.com", "api.example.com"], delay=2):
+    """
+    1. 检查域名是否在允许列表中。
+    2. 进行 DNS 解析，判断解析结果不包含内网 IP。
+    3. 延时后再次解析，确保解析结果未变化（防止 DNS 重绑定）。
+    """
+    parsed_url = urlparse(url)
+    hostname = parsed_url.hostname
+
+    # 检查域名白名单
+    if hostname not in allowed_domains:
+        raise ValueError("域名不在允许列表中")
+
+    # 第一次 DNS 解析
+    initial_ips = get_ips(hostname)
+    for ip in initial_ips:
+        if is_private_ip(ip):
+            raise ValueError(f"初次解析发现禁止访问的内网 IP: {ip}")
+
+    # 等待一定时间后再次解析
+    time.sleep(delay)
+    subsequent_ips = get_ips(hostname)
+    if initial_ips != subsequent_ips:
+        raise ValueError("检测到 DNS 重绑定风险：初次解析 IP 与后续解析 IP 不一致")
+    
+    # 附加检查：明确屏蔽常见云服务内网地址
+    blocked_ips = ["169.254.169.254"]  # AWS 元数据服务示例，可根据情况增加
+    for ip in subsequent_ips:
+        if ip in blocked_ips:
+            raise ValueError(f"禁止访问云环境内部敏感地址: {ip}")
+
+    # 发起请求
+    response = requests.get(url, timeout=5)
+    return response.text
+```
+
+### **1.1.5 命令注入（Command Injection）**
+
+防御代码：以列表的方式传递命令及其参数而不启用shell
+
+```bash
+def safe_execute(p):
+	subprocess.run(["ls",p])
+```
+
+### **1.1.6 文件包含漏洞（LFI/RFI）**
+
+同下
+
+### **1.1.7 路径穿越（Path Traversal）**
+
+防御代码：os.path.abspath 将路径转化为绝对路径，内部会对路径进行规范化
+
+```bash
+def safe_read_file(filename):
+	base_dir = os.path.abspath('/var/app/data')
+	request_path = os.path.abspath(os.path.join(base_dir,filename))
+	#白名单校验：
+	if not request_path.startswith(base_dir):
+		return
+	with open(request_path, 'r') as f:
+		content = f.read()
+	return content
+```
+
+### **1.1.8 浏览器安全（安全机制与响应头）**
+
+**同源策略（Same Origin Policy, SOP）**
+
+**跨域资源共享（CORS）**
 
 **内容安全策略（CSP）**
 
-**X-XSS-Protection**
+**其它重要的安全响应头**
 
-**X-Content-Type-Options**
+•	**X-Frame-Options：**
+
+•	**X-XSS-Protection：**
+
+•	**X-Content-Type-Options：**
 
 ## **1.2 代码审计**
 
@@ -69,7 +216,7 @@
 
 # **3. 云安全**
 
-# **4. 容器安全（Kubernetes与Docker）**
+# **4. [容器安全](https://github.com/neargle/my-re0-k8s-security?tab=readme-ov-file#7-%E5%AE%B9%E5%99%A8%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92%E7%BB%84%E4%BB%B6-api-%E9%85%8D%E7%BD%AE%E4%B8%8D%E5%BD%93%E6%88%96%E6%9C%AA%E9%89%B4%E6%9D%83)（Kubernetes与Docker）**
 
 首先进行一些概念的介绍：
 
@@ -330,6 +477,8 @@ http://<host-ip>:4194
 
 ## 4.2 **Docker**
 
-# **5. 移动安全**
+# **5. 风控**
 
-# **6. 应急响应**
+# **6. 移动安全**
+
+# **7. 应急响应**
