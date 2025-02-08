@@ -1,3 +1,55 @@
+- [**1. 基础应用安全**](#1-基础应用安全)
+  - [**1.1 Web安全**](#11-web安全)
+    - [**1.1.1 SQL注入**](#111-sql注入)
+    - [**1.1.2 跨站脚本（XSS）**](#112-跨站脚本xss)
+    - [**1.1.3 跨站请求伪造（CSRF）**](#113-跨站请求伪造csrf)
+    - [**1.1.4 服务端请求伪造（SSRF）**](#114-服务端请求伪造ssrf)
+    - [**1.1.5 命令注入（Command Injection）**](#115-命令注入command-injection)
+    - [**1.1.6 文件包含漏洞（LFI/RFI）**](#116-文件包含漏洞lfirfi)
+    - [**1.1.7 路径穿越（Path Traversal）**](#117-路径穿越path-traversal)
+    - [**1.1.8 浏览器安全（安全机制与响应头）**](#118-浏览器安全安全机制与响应头)
+  - [**1.2 代码审计**](#12-代码审计)
+    - [**静态代码分析（SAST）**](#静态代码分析sast)
+    - [**动态代码分析（DAST）**](#动态代码分析dast)
+    - [**安全代码编写最佳实践**](#安全代码编写最佳实践)
+  - [**1.3 身份验证与授权**](#13-身份验证与授权)
+    - [**密码安全**](#密码安全)
+    - [**多因素认证（MFA）**](#多因素认证mfa)
+    - [**OAuth和OpenID Connect**](#oauth和openid-connect)
+    - [**会话管理**](#会话管理)
+  - [**1.4 数据安全**](#14-数据安全)
+    - [**数据加密**](#数据加密)
+    - [**数据泄露防护（DLP）**](#数据泄露防护dlp)
+    - [**隐私保护（GDPR、CCPA）**](#隐私保护gdprccpa)
+  - [**1.5 中间件与CMS安全**](#15-中间件与cms安全)
+- [**2. 网络安全**](#2-网络安全)
+  - [**2.1 网络协议安全**](#21-网络协议安全)
+  - [**2.2 网络攻击防护**](#22-网络攻击防护)
+  - [**2.3 网络设备安全**](#23-网络设备安全)
+  - [**2.4 端口与服务安全**](#24-端口与服务安全)
+  - [**2.5 常见高危端口**](#25-常见高危端口)
+  - [**2.6 特定服务的安全**](#26-特定服务的安全)
+- [**3. 云安全**](#3-云安全)
+- [**4. 容器安全（Kubernetes与Docker）**](#4-容器安全kubernetes与docker)
+  - [**4.1 Kubernetes**](#41-kubernetes)
+    - [4.1.1 Api Server](#411-api-server)
+    - [4.1.2 kubectl proxy(命令非服务)](#412-kubectl-proxy命令非服务)
+    - [4.1.3 kubelet](#413-kubelet)
+    - [4.1.4 Dashboard](#414-dashboard)
+    - [4.1.5 Docker API](#415-docker-api)
+    - [4.1.6 ETCD](#416-etcd)
+    - [4.1.7 kube-controller-manager](#417-kube-controller-manager)
+    - [4.1.8 kube-proxy](#418-kube-proxy)
+    - [4.1.9 kube-scheduler](#419-kube-scheduler)
+    - [4.1.10 cAdvisor](#4110-cadvisor)
+  - [4.2 **Docker**](#42-docker)
+- [**5. 风控**](#5-风控)
+- [**6. 移动安全**](#6-移动安全)
+- [**7. 应急响应**](#7-应急响应)
+  - [7.1 事件发现](#71-事件发现)
+  - [7.2 事件追踪](#72-事件追踪)
+  - [7.3 事件分析](#73-事件分析)
+  - [7.4 协调处理与应急响应](#74-协调处理与应急响应)
 # **1. 基础应用安全**
 
 ## **1.1 Web安全**
@@ -165,7 +217,12 @@ def safe_read_file(filename):
 
 **跨域资源共享（CORS）**
 
-通过在HTTP响应头中添加一些字段如Access-Control-Allow-Origin、Access-Control-Allow-Methods来实现功能：确保只有来自指定源的请求可以跨域访问后端 API。
+CORS是为了应对上述的同源策略严格限制而设计的机制。通过在HTTP响应头中添加一些字段如Access-Control-Allow-Origin、Access-Control-Allow-Methods来实现功能：确保只有来自指定源的请求可以跨域访问后端 API。
+
+```bash
+response.headers['Access-Control-Allow-Origin'] = 'https://example.com'
+response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE'
+```
 
 **内容安全策略（CSP）**
 
