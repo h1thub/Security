@@ -1,6 +1,5 @@
 # 目录
 
-- [目录](#目录)
 - [**1. 基础应用安全**](#1-基础应用安全)
   - [**1.1 Web安全**](#11-web安全)
     - [**1.1.1 SQL注入**](#111-sql注入)
@@ -31,7 +30,7 @@
   - [**2.3 网络设备安全**](#23-网络设备安全)
   - [**2.4 网络协议安全**](#24-网络协议安全)
 - [**3. 云安全**](#3-云安全)
-- [**4. \[容器安全\]（Kubernetes与Docker）**](#4-容器安全kubernetes与docker)
+- [**4. 容器安全（Kubernetes与Docker）**](#4-容器安全kubernetes与docker)
   - [**4.1 Kubernetes**](#41-kubernetes)
     - [4.1.1 Api Server](#411-api-server)
     - [4.1.2 kubectl proxy(命令非服务)](#412-kubectl-proxy命令非服务)
@@ -335,7 +334,7 @@ def set_security_headers(response):
 
 ---
 
-# **4. [容器安全]（Kubernetes与Docker）**
+# **4. 容器安全（Kubernetes与Docker）**
 
 首先进行一些概念的介绍：
 
