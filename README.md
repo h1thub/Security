@@ -160,17 +160,73 @@ def safe_read_file(filename):
 
 **同源策略（Same Origin Policy, SOP）**
 
+- 同源：同协议、端口、域名
+- 策略：限制跨域数据访问，防止恶意网站窃取敏感信息（XSS、CSRF）
+
 **跨域资源共享（CORS）**
 
+通过在HTTP响应头中添加一些字段如Access-Control-Allow-Origin、Access-Control-Allow-Methods来实现功能：确保只有来自指定源的请求可以跨域访问后端 API。
+
 **内容安全策略（CSP）**
+
+通过在HTTP响应头中添加字段 Content-Security-Policy 来限制页面可以加载哪些外部资源（脚本、样式、图片等）。这样可以有效防止 XSS 攻击及其它资源注入问题。
+
+```bash
+csp_policy = (
+        "default-src 'self'; "
+        "script-src 'self' https://trustedscripts.example.com; "
+        "style-src 'self'; "
+        "img-src 'self' data:;"
+    )
+response.headers['Content-Security-Policy'] = csp_policy
+```
 
 **其它重要的安全响应头**
 
 •	**X-Frame-Options：**
 
+这个头设计出来就是为了防止点击劫持（Clickjacking）的，禁止或限制页面被嵌入到 <iframe> 中。常见配置有 DENY 或 SAMEORIGIN。
+
+```bash
+response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+```
+
 •	**X-XSS-Protection：**
 
+启用浏览器内置的 XSS 过滤器，配置为 1; mode=block 可以在检测到 XSS 攻击时阻止页面渲染。
+
+```bash
+response.headers['X-XSS-Protection'] = '1; mode=block'
+```
+
 •	**X-Content-Type-Options：**
+
+禁用浏览器的 MIME 类型嗅探（MIME Sniffing），确保浏览器按照服务器声明的 Content-Type 解析内容，从而防止某些内容被误解释为可执行代码。
+
+```bash
+response.headers['X-Content-Type-Options'] = 'nosniff'
+```
+
+**总结：**
+
+```bash
+def set_security_headers(response):
+    # CSP 策略
+    csp_policy = (
+        "default-src 'self'; "
+        "script-src 'self' https://trustedscripts.example.com; "
+        "style-src 'self'; "
+        "img-src 'self' data:;"
+    )
+    response.headers['Content-Security-Policy'] = csp_policy
+    # 防点击劫持
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # XSS 过滤
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # 禁止 MIME 嗅探
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+```
 
 ## **1.2 代码审计**
 
@@ -482,3 +538,29 @@ http://<host-ip>:4194
 # **6. 移动安全**
 
 # **7. 应急响应**
+
+## 7.1 事件发现
+
+1、监控（SIEM、SOC、IDS、IPS等）与日志的异常
+
+2、SDL 自动化生成的告警 or 其他手段工具发现的问题
+
+3、威胁情报
+
+## 7.2 事件追踪
+
+1、时间线
+
+2、优先级分类
+
+## 7.3 事件分析
+
+先理解为什么会有该安全事件，然后站在攻击者的角度，思考，我能干什么，一步一步复原整个过程。（这步我觉得最重要，分析得出漏洞的原因，以及造成的影响和危害，以及下面一个阶段的“我们接下来如何去做”）
+
+## 7.4 协调处理与应急响应
+
+1、一旦确认安全事件，立即启动应急预案，采取措施如隔离受感染系统、阻断攻击流量、封堵漏洞入口等。
+
+2、与网络、运维、应用、容器等团队保持及时沟通，确保响应过程中各个环节的信息共享与配合。
+
+3、在应急响应后，组织团队修复漏洞、清除后门，并确保系统安全恢复到正常状态。
